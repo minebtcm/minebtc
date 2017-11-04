@@ -489,6 +489,7 @@
                 data: this.getData,
                 chainId: "0x1"
               };
+              this.nextNonce++;
 
               const ejsTx = new ethereumjs.Tx(rawTx);
               ejsTx.sign(this.privateKey);
@@ -502,7 +503,6 @@
                 } else
                   console.log(err);
               });
-              this.nextNonce++;
               let toast = document.createElement('paper-toast');
               toast.innerHTML = "Transaction(s) sent. Good luck!";
               toast.open();
