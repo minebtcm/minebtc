@@ -187,17 +187,26 @@
         flex-flow: column nowrap;
         align-items: center;
       }
+      #closeDonate,
+      #closeHelp,
+      #closeAbout {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border: 1px solid red;
+        height: 36px;
+      }
     </style>
 
     <header>
-      <img id="logo" src="./../../minebtcm/resources/fun2.png">
+      <img id="logo" src="./../../minebtcm/resources/fun2.png" />
       <div id="title">MineBTCM</div>
       <!--div id="rails"></div-->
     </header>
     <div class="content">
       <div class="left">
         <timer-monitor time-now="{{timeNow}}" reward-end="{{rewardEnd}}" time-difference="{{timeDifference}}"> </timer-monitor>
-        <paper-dropdown-menu id="provider" label="Web3 Provider" no-animations="" value="{{selectedProvider}}" disabled="">
+        <paper-dropdown-menu id="provider" label="Web3 Provider" no-animations value="{{selectedProvider}}" disabled>
           <paper-listbox slot="dropdown-content" selected="0">
             <paper-item>INFURA</paper-item>
             <paper-item>localhost:8545</paper-item>
@@ -232,6 +241,7 @@
     </div>
 
     <paper-dialog id="donate" vertical-align="top" horizontal-align="left">
+        <paper-button id="closeDonate" on-tap="closeDonate" >close</paper-button>
       <paper-dialog-scrollable>
         <donation-dialog private-key="{{privateKey}}" web3="{{web3}}" keyfile-address="{{keyfileAddress}}">
         </donation-dialog>
@@ -239,12 +249,13 @@
     </paper-dialog>
 
     <paper-dialog id="help" vertical-align="top" horizontal-align="left">
+      <paper-button id="closeHelp" on-tap="closeHelp" >close</paper-button>
       <paper-dialog-scrollable>
         <h1> Help </h1>
         <p>
-          </p><h2>How to use minebtcm:</h2>
+          <h2>How to use minebtcm:</h2>
           <p>
-            </p><h3> 1. Create a set of transactions (or choose a preset)</h3>
+            <h3> 1. Create a set of transactions (or choose a preset)</h3>
             Transactions have the following parameters:<br><br>
             <b>Offset</b>: specifies the time when the transaction should be executed in X SECONDS BEFORE the RewardEnd Time.
             Executing the transaction after the RewardEnd Time is also possible by using a negative number but is not recommended.
@@ -261,13 +272,14 @@
             You can only start mining if at least one transaction is scheduled and a valid account is imported.
             <br><br> Any questions? minebtcm@yandex.com
             <h3>Happy mining!</h3>
-          <p></p>
+          </p>
 
-        <p></p>
+        </p>
       </paper-dialog-scrollable>
     </paper-dialog>
 
     <paper-dialog id="about" vertical-align="top" horizontal-align="left">
+      <paper-button id="closeAbout" on-tap="closeAbout" >close</paper-button>
       <paper-dialog-scrollable>
         <h1> About </h1>
         <p>
@@ -291,7 +303,7 @@
         <br><br> Note: This website is only tested in chrome.
 
         <h2> Happy mining! </h2>
-        © 2017 minebtcm
+        &copy; 2017 minebtcm
       </paper-dialog-scrollable>
     </paper-dialog>
 
@@ -577,6 +589,17 @@
         this.$.about.open();
       }
 
+      closeDonate() {
+        this.$.donate.close();
+      }
+
+      closeHelp() {
+        this.$.help.close();
+      }
+
+      closeAbout() {
+        this.$.about.close();
+      }
     }
     window.customElements.define(BitcoinereumMiningApp.is, BitcoinereumMiningApp);
   </script>
