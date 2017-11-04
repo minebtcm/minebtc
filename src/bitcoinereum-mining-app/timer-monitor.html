@@ -1,0 +1,87 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="timer-monitor">
+    <template>
+        <style>
+             :host {
+                display: inline-block;
+                color: black;
+                padding: 16px 0 16px 0;
+                font-size: 1.2em;
+                border-radius: 3px;
+                width: 16vw;
+                border: 1px solid black;
+            }
+
+            .row {
+                display: flex;
+                position: relative;
+                flex-flow: row nowrap;
+                width: 14vw;
+                justify-content: center;
+            }
+
+            .left {
+                width: 45% !important;
+                padding-right: 10px;
+            }
+
+            .row div {
+                width: 40%;
+            }
+        </style>
+
+        <div class="row">
+            <div class="left">Current:</div>
+            <div id="now">[[timeNow]]</div>
+        </div>
+        <div class="row">
+            <div class="left">RewardEnd:</div>
+            <div id="end">[[rewardEnd]]</div>
+        </div>
+        <div class="row">
+            <div class="left">Countdown:</div>
+            <div id="diff">[[timeDifference]]</div>
+        </div>
+    </template>
+
+    <script>
+        class TimerMonitor extends Polymer.Element {
+            static get is() {
+                return 'timer-monitor';
+            }
+
+            static get properties() {
+                return {
+                    timeNow: {
+                        type: Number,
+                        notify: true
+                    },
+                    rewardEnd: Number,
+                    timeDifference: {
+                        type: Number,
+                        notify: true
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+                this.timeNow = Math.floor(Date.now() / 1000);
+                this.updateTime();
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            updateTime() {
+                this.timeNow = Math.floor(Date.now() / 1000);
+                this.timeDifference = this.rewardEnd - this.timeNow;
+                setTimeout(() => { this.updateTime() }, 1000);
+            }
+        }
+
+        window.customElements.define(TimerMonitor.is, TimerMonitor);
+    </script>
+</dom-module>

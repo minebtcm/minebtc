@@ -1,0 +1,89 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="coin-stack">
+    <template>
+        <style>
+             :host {
+                display: block;
+                position: absolute;
+                bottom: 16px;
+                right: 16px;
+            }
+            #succ {
+                color: green;
+            }
+            #fail {
+                color: red;
+            }
+            #amount {
+                font-size: 2em;
+            }
+        </style>
+
+        <div id="coinStack"></div>
+        <div id="amount"><span id="succ">[[minedAmount]]</span> - <span id="fail">[[failedAmount]]</span></div>
+    </template>
+
+    <script>
+        class CoinStack extends Polymer.Element {
+
+            static get is() {
+                return 'coin-stack';
+            }
+
+            static get properties() {
+                return {
+                    coinStackElement: Object,
+                    minedAmount: {
+                        type: Number,
+                        observer: "newCoinMined"
+                    },
+                    failedAmount: {
+                        type: Number,
+                    },
+                    stackDisabled: {
+                        type: Boolean,
+                        value: false
+                    }
+                };
+            }
+
+            newCoinMined() {
+                if(this.minedAmount) {
+                    console.log("newCoinMined() amount: " + this.minedAmount);
+                    if ( !this.stackDisabled  && this.minedAmount > 0) {
+                        this.stackDisabled = true;
+                        setTimeout( () => {
+                            console.log("AMOUNT: " + this.minedAmount);
+                            this.coinStackElement.setValue(this.minedAmount); 
+                            this.stackDisabled = false
+                        }, 1000 );
+                    }
+                }
+            }
+
+            constructor() {
+                super();
+            }
+
+            ready() {
+                super.ready();
+                this.coinStackElement = new CoinStackBar({
+                    container: this.$.coinStack,
+                    coinimgsrc: '../../libs/JS-CoinStackBar/bitcoin.svg',
+                    coinimgwidth: 200,
+                    coinimgheight: 100,
+                    coinheight: 30,
+                    xoffset: 10,
+                    yoffset: 6,
+                    startvalue: 0,
+                    maxstackheight: 100,
+                    containerwidth: 50,
+                });
+                this.minedAmount = 0;
+            }
+        }
+
+        window.customElements.define(CoinStack.is, CoinStack);
+    </script>
+</dom-module>

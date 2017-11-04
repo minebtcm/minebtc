@@ -1,0 +1,209 @@
+<link rel="import" href="./../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="./../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="./../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="./../../bower_components/paper-input/paper-input.html">
+
+
+<dom-module id="donation-dialog">
+    <template>
+        <style>
+             :host {
+                display: block;
+                margin-bottom: 28px;
+            }
+
+            paper-input {
+                width: 5em;
+                margin-right: 16px;
+            }
+
+            paper-button {
+                border: 1px solid black;
+            }
+
+            paper-button:hover {
+                animation: drippin 0.8s infinite;
+                opacity: 1;
+            }
+
+            @keyframes drippin {
+                0%,
+                100% {
+                    background: #7ccdea;
+                }
+                16% {
+                    background: #0074D9;
+                }
+                32% {
+                    background: #2ECC40;
+                }
+                48% {
+                    background: #FFDC00;
+                }
+                64% {
+                    background: #B10DC9;
+                }
+                80% {
+                    background: #FF4136;
+                }
+            }
+
+            .donationInput {
+                display: flex;
+                align-items: flex-end;
+            }
+
+            .wrapper {
+                display: flex;
+            }
+
+            #yes {
+                position: absolute;
+                margin-top: 60px;
+                margin-left: 16px;
+            }
+
+            #no {
+                position: absolute;
+                margin-top: 60px;
+                margin-left: 200px;
+            }
+
+            #no:hover {
+                animation: none;
+                background: red;
+            }
+
+            #confirmationView {
+                padding: 1em;
+                display: none;
+            }
+        </style>
+
+        <h1> Donate </h1>
+        If you like the project feel free to contribute some ETH for the developer. You can either send from a wallet of your choice
+        to this address:<br>
+        <br><b>[[donationAddress]]</b><br>
+        <br> or use the section below to donate with your imported account. Other tokens than ETH are equally welcomed.
+        <h2>Donate with connected account</h2>
+        <div class="wrapper">
+            <div>
+                <div class="donationInput">
+                    <paper-input type="number" label="Amount of ETH to Donate" title="Amount of ETH to Donate" value="{{donationAmount}}"></paper-input>
+                    <div>Amount of ETH to Donate</div>
+                </div>
+                <div class="donationInput">
+                    <paper-input type="number" label="GasPrice in GWEI" title="GasPrice in GWEI" value="{{donationGasPrice}}"></paper-input>
+                    <div>GasPrice in GWEI</div>
+                </div>
+                <div class="donationInput">
+                    <paper-input type="number" label="GasLimit" title="GasLimit" value="{{donationGasLimit}}"></paper-input>
+                    <div>GasLimit</div>
+                </div>
+            </div>
+            <paper-button on-tap="askForConfirmation" disabled="{{noPrivateKey}}">Donate</paper-button>
+            <div id="confirmationView">
+                <div>
+                    Are you sure you want to donate <b>[[donationAmount]] ETH</b> with a gasPrice of <b>[[donationGasPrice]] gwei</b>                    and a <b>gasLimit of [[donationGasLimit]]</b>?
+                </div>
+                <paper-button id="yes" on-tap="donate">yes i'm sure</paper-button>
+                <paper-button id="no" on-tap="cancelDonation">cancel</paper-button>
+            </div>
+        </div>
+        <paper-toast id="thanks">Thanks for your donation. You are awesome!</paper-toast>
+    </template>
+
+    <script>
+        class DonationDialog extends Polymer.Element {
+
+            static get is() {
+                return 'donation-dialog';
+            }
+
+            static get properties() {
+                return {
+                    privateKey: {
+                        type: Object,
+                        observer: "_privateKeyChanged"
+                    },
+                    keyfileAddress: String,
+                    web3: Object,
+                    donationAmount: {
+                        type: Number,
+                        value: 0.01
+                    },
+                    donationGasPrice: {
+                        type: Number,
+                        value: 1
+                    },
+                    donationGasLimit: {
+                        type: Number,
+                        value: 100000
+                    },
+                    confirmation: {
+                        type: Boolean,
+                        value: false
+                    },
+                    donationAddress: {
+                        type: String,
+                        value: "0x8913F599a4C06AcFD4536e4155BED362eCB6D8ac"
+                    },
+                    noPrivateKey: {
+                        type: Boolean,
+                        notify: true,
+                        value: true
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            _privateKeyChanged() {
+                if (this.privateKey)
+                    return this.noPrivateKey = false;
+                else
+                    return this.noPrivateKey = true;
+            }
+            askForConfirmation() {
+                this.$.confirmationView.style.display = "block";
+            }
+
+            cancelDonation() {
+                this.$.confirmationView.style.display = "none";
+            }
+
+            donate() {
+                let rawTx = {
+                    nonce: this.web3.toHex(this.web3.eth.getTransactionCount(this.keyfileAddress)),
+                    gasPrice: this.web3.toHex(this.web3.toWei(this.donationGasPrice, 'gwei')),
+                    gasLimit: this.web3.toHex(this.donationGasLimit),
+                    to: this.donationAddress,
+                    value: this.web3.toHex(this.web3.toWei(this.donationAmount, 'ether')),
+                    data: "0x",
+                    chainId: "0x1"
+                };
+                const ejsTx = new ethereumjs.Tx(rawTx);
+                ejsTx.sign(this.privateKey);
+                const serializedTx = ejsTx.serialize();
+                this.web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
+                    if (!err) {
+                        console.log(hash);
+                    } else
+                        console.log(err);
+                });
+                this.$.confirmationView.style.display = "none";
+                this.$.thanks.open();
+            }
+
+
+        }
+
+        window.customElements.define(DonationDialog.is, DonationDialog);
+    </script>
+</dom-module>

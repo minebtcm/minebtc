@@ -1,0 +1,247 @@
+<link rel="import" href="./../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="./../../bower_components/file-drop-zone/file-drop-zone.html">
+<link rel="import" href="./../../bower_components/gold-password-input/gold-password-input.html">
+<link rel="import" href="./../../bower_components/paper-password-input/paper-password-input.html">
+<link rel="import" href="./../../bower_components/paper-collapse-item/paper-collapse-item.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+
+
+<link rel="import" href="./terms-of-use.html">
+
+
+<dom-module id="keyfile-import">
+    <template>
+        <style>
+             :host {
+                display: block;
+                margin-top: 26px;
+            }
+        </style>
+
+        <style>
+            paper-input,
+            #pw,
+            .pw-container {
+                width: 16vw !important;
+            }
+
+            file-drop-zone {
+                border: 1px dashed transparent;
+                color: #aaa;
+                background-color: #efefef;
+                width: 16vw;
+                ;
+                height: 10vw;
+                transition: all .3s;
+            }
+
+            file-drop-zone.dragover {
+                border: 1px dashed #E91E63;
+                transition: all .3s;
+            }
+
+            file-drop-zone:hover>[slot='drop-zone'],
+            file-drop-zone.dragover>[slot='drop-zone'] {
+                color: #E91E63;
+                transition: all .3s;
+            }
+
+            file-drop-zone.errored {
+                background-color: #FFEBEE;
+                transition: all .3s;
+            }
+
+            file-drop-zone[has-files] {
+                color: #2196F3;
+                transition: all .3s;
+            }
+
+            [slot='drop-zone'] {
+                text-align: center;
+                font-size: 1.1em;
+                --iron-icon-height: 64px;
+                --iron-icon-width: 64px;
+            }
+
+            [slot='drop-zone']>.title {
+                font-size: 1.2em;
+            }
+
+            [slot='drop-zone']>.small {
+                font-size: 0.6em;
+            }
+
+            paper-button {
+                border: 1px solid black;
+                color: black;
+            }
+
+            #invalid,
+            #invalidPrivateKey {
+                color: red;
+                opacity: 0;
+                transition: 0.36s ease-out;
+            }
+
+            #lock {
+                margin-right: 6px;
+            }
+
+            paper-collapse-item {
+                --paper-collapse-item-icon: {
+                    color: black !important;
+                }
+            }
+
+            .termsLink {
+                cursor: pointer;
+                color: blue;
+            }
+
+            paper-checkbox {
+                margin-left: 6px;
+            }
+
+            #closeTerms {
+                height: 62px;
+                position: absolute;
+                right: 64px;
+                bottom: 6px;
+                background: green;
+                color: white;
+                font-size: 1.5em;
+            }
+        </style>
+
+        <paper-collapse-item icon="icons:lock-outline" header="<h3> Import Keyfile / JSON</h3>">
+            <file-drop-zone id="zone" multiple="false" files="{{files}}" on-files-changed="fileChanged">
+                <div slot="drop-zone" class="layout vertical center center-justified">
+                    <iron-icon icon="description"></iron-icon>
+                    <div class="title">Drop keyfile here</div>
+                    <template is="dom-repeat" items="[[files]]">
+                        <div class="small">[[item.name]]</div>
+                    </template>
+                </div>
+            </file-drop-zone>
+            <div class="pw-container">
+                <paper-password-input id="pw" label="Passphrase" value="{{pass}}"></paper-password-input>
+            </div>
+            <div id="invalid">Whoops. The entered passphrase is wrong!</div>
+            <paper-button on-tap="unlock" disabled="{{!keyFileTerms}}">
+                <iron-icon id="lock" icon="icons:lock-open"></iron-icon>unlock
+            </paper-button>
+            <paper-checkbox active="{{keyFileTerms}}">Agree to <span class="termsLink" on-click="openTerms">Terms Of Use</span></paper-checkbox>
+        </paper-collapse-item>
+        <paper-collapse-item icon="icons:lock-outline" header="<h3> Import Private Key</h3>">
+            <div class="pw-container">
+                <paper-password-input id="prvtKey" title="Private Key" label="Private Key"></paper-password-input>
+            </div>
+            <paper-input id="prvtKeyAddress" title="Public Address" label="Public Address (0x...)"></paper-input>
+            <div id="invalidPrivateKey">Whoops. Something with the private key is wrong!</div>
+            <paper-button on-tap="unlockwithPrivateKey" disabled="{{!privateKeyTerms}}">
+                <iron-icon id="lock" icon="icons:lock-open"></iron-icon>unlock
+            </paper-button>
+            <paper-checkbox active="{{privateKeyTerms}}">Agree to <span class="termsLink" on-click="openTerms">Terms Of Use</span></paper-checkbox>
+        </paper-collapse-item>
+        <paper-dialog id="termsOfUse">
+            <paper-dialog-scrollable>
+                <terms-of-use></terms-of-use>
+            </paper-dialog-scrollable>
+            <paper-button id="closeTerms" on-tap="closeTerms">OKAY</paper-button>
+        </paper-dialog>
+
+    </template>
+
+    <script>
+        class KeyFileImport extends Polymer.Element {
+            static get is() {
+                return 'keyfile-import';
+            }
+
+            static get properties() {
+                return {
+                    files: {
+                        type: Array,
+                        notify: true,
+                        value: []
+                    },
+                    privateKey: {
+                        type: Object,
+                        notify: true
+                    },
+                    keyObject: Object,
+                    keyfileAddress: {
+                        type: String,
+                        notify: true
+                    },
+                    pass: {
+                        type: String,
+                        notify: true
+                    },
+                    accountImported: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            fileChanged(e) {
+                setTimeout(() => {
+                    let importFile = this.files[0];
+                    var reader = new FileReader();
+                    reader.readAsText(importFile);
+                    reader.onloadend = () => {
+                        this.keyObject = JSON.parse(reader.result);
+                        this.keyfileAddress = "0x" + this.keyObject.address;
+                    };
+                }, 300);
+            }
+
+            unlock() {
+                try {
+                    this.privateKey = window.keythereum.recover(this.pass, this.keyObject);
+                    this.pass = "";
+                    this.accountImported = true;
+                } catch (err) {
+                    this.$.invalid.style.opacity = "1";
+                    console.log(err);
+                    this.accountImported = false;
+                    setTimeout(() => { this.$.invalid.style.opacity = "0" }, 10000);
+                }
+            }
+
+            unlockwithPrivateKey() {
+                try {
+                    this.privateKey = new window.buffer.Buffer(this.$.prvtKey.value, "hex");
+                    this.keyfileAddress = this.$.prvtKeyAddress.value;
+                    this.$.prvtKeyAddress.value = "";
+                    this.accountImported = true;
+                } catch (err) {
+                    console.log(err);
+                    this.accountImported = false;
+                    setTimeout(() => { this.$.invalidPrivateKey.style.opacity = "0" }, 3000);
+                }
+            }
+
+            openTerms() {
+                this.$.termsOfUse.open();
+            }
+            closeTerms() {
+                this.$.termsOfUse.close();
+            }
+        }
+
+        window.customElements.define(KeyFileImport.is, KeyFileImport);
+    </script>
+</dom-module>

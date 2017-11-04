@@ -1,0 +1,190 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+
+<link rel="import" href="./scheduled-transaction.html">
+
+<dom-module id="transaction-scheduler">
+    <template>
+        <style>
+             :host {
+                display: block;
+                color: #262c3a;
+            }
+
+            .row {
+                display: flex;
+                flex-flow: row nowrap;
+                align-items: flex-end;
+                margin: 0 5px 0 0;
+            }
+
+            .delete {
+                --paper-button-ink-color: red;
+            }
+
+            #add,
+            #single-address-btn {
+                background: lightgray;
+            }
+
+            #add {
+                margin-top: 16px;
+                margin-right: 2em;
+                background: white;
+                border: 1px solid black;
+            }
+
+            #single-address {
+                width: 24em;
+            }
+
+            paper-item {
+                cursor: pointer;
+            }
+
+            #header {
+                display: flex;
+                flex-flow: row nowrap;
+                align-items: flex-start;
+            }
+
+            #header h2 {
+                margin-right: 60px;
+                margin-top: 0;
+            }
+
+            .manageRow {
+                display: flex;
+                flex-flow: row nowrap;
+                align-items: center;
+                margin-bottom: 32px;
+            }
+
+            #or {
+                font-size: 1.3em;
+                margin-right: 32px;
+                padding-top: 23px;
+            }
+        </style>
+
+        <div id="header">
+            <h2>Schedule Transactions</h2>
+        </div>
+        <div class="manageRow">
+            <paper-button id="add" on-tap="addTransaction">add transaction</paper-button>
+            <div id="or">OR</div>
+            <paper-dropdown-menu id="presets" label="Select Preset" no-animations="" value="{{selectedPreset}}">
+                <paper-listbox slot="dropdown-content">
+                    <paper-item>8x 1 gwei, offset 20</paper-item>
+                    <paper-item>8x 2 gwei, offset 16</paper-item>
+                    <paper-item>3x 9 gwei, offset 10</paper-item>
+                </paper-listbox>
+            </paper-dropdown-menu>
+        </div>
+        <div id="flex">
+            <template is="dom-repeat" items="{{scheduledTransactions}}" index-as="i">
+                <div class="row">
+                    <scheduled-transaction item="{{item}}" index="{{i}}"></scheduled-transaction>
+                    <paper-button class="delete" on-tap="removeTransaction" data-item$="[[i]]">
+                        <iron-icon icon="icons:delete-forever"></iron-icon>
+                    </paper-button>
+                </div>
+            </template>
+        </div>
+        <!--paper-input id="single-address" label="Single Address" title="Single Address" value="{{singleAddress}}"></paper-input>
+        <paper-button id="single-address-btn" on-tap="applySingleAddress">apply address</paper-button-->
+    </template>
+
+    <script>
+        class transactionScheduler extends Polymer.Element {
+            static get is() {
+                return 'transaction-scheduler';
+            }
+
+            static get properties() {
+                return {
+                    scheduledTransactions: {
+                        type: Array,
+                        notify: true
+                    },
+                    selectedPreset: {
+                        type: String,
+                        notify: true,
+                        observer: "presetChanged"
+                    },
+                    singleAddress: String,
+                    nothingScheduled: {
+                        type: Boolean,
+                        notify: true
+                    },
+                    keyfileAddress: {
+                        type: String,
+                        notify: true
+                    }
+                };
+            }
+
+            presetChanged() {
+                if (this.selectedPreset === "8x 1 gwei, offset 20") {
+                    this.scheduledTransactions = [];
+                    for (let i = 0; i < 8; i++) {
+                        this.push("scheduledTransactions", new Transaction(this.keyfileAddress, 100000, 1, 20));
+                    }
+                } else if (this.selectedPreset === "8x 2 gwei, offset 16") {
+                    this.scheduledTransactions = [];
+                    for (let i = 0; i < 8; i++) {
+                        this.push("scheduledTransactions", new Transaction(this.keyfileAddress, 100000, 2, 16));
+                    }
+                } else if (this.selectedPreset === "3x 9 gwei, offset 10") {
+                    this.scheduledTransactions = [];
+                    for (let i = 0; i < 3; i++) {
+                        this.push("scheduledTransactions", new Transaction(this.keyfileAddress, 100000, 9, 10));
+                    }
+                }
+                this.nothingScheduled = false;
+            }
+
+            constructor() {
+                super();
+                this.scheduledTransactions = [];
+            }
+
+            ready() {
+                super.ready();
+                this.scheduledTransactions = [];
+            }
+
+            addTransaction() {
+                if (this.scheduledTransactions.length > 0) {
+                    let prev = this.scheduledTransactions[this.scheduledTransactions.length - 1];
+                    this.push("scheduledTransactions", new Transaction(prev.fromAddress, prev.gasLimit, prev.gasPrice, prev.offset));
+                } else {
+                    this.push("scheduledTransactions", new Transaction(this.keyfileAddress, 100000, 21, 0));
+                }
+                this.nothingScheduled = false;
+            }
+
+            removeTransaction(e) {
+                const index = event.target.dataset.item;
+                this.splice("scheduledTransactions", index, 1);
+                if (this.scheduledTransactions.length == 0) {
+                    this.nothingScheduled = true;
+                }
+            }
+
+            applySingleAddress() {
+                for (let i = 0; i < this.scheduledTransactions.length; i++) {
+                    this.set("scheduledTransactions." + i + ".fromAddress", this.singleAddress);
+                }
+            }
+        }
+
+        window.customElements.define(transactionScheduler.is, transactionScheduler);
+    </script>
+</dom-module>

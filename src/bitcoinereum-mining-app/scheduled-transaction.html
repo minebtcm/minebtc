@@ -1,0 +1,71 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+
+<dom-module id="scheduled-transaction">
+    <template>
+        <style>
+             :host {
+                display: flex;
+                flex-flow: row nowrap;
+                align-items: center;
+            }
+
+            .index {
+                font-size: 1.5em;
+            }
+
+            .marg-right {
+                margin-right: 16px;
+            }
+
+            #offset {
+                width: 4em;
+            }
+
+            #gasPrice {
+                width: 6em;
+            }
+
+            #gasLimit {
+                width: 8em;
+            }
+
+            #address {
+                width: 23em;
+            }
+        </style>
+        <div class="marg-right">#<span class="index">{{index}}</span></div>
+        <paper-input id="offset" type="number" label="offset" title="Seconds BEFORE RewardEnd" value="{{item.offset}}"></paper-input>
+        <paper-input id="gasPrice" type="number" label="gasPrice" title="gasPrice in gwei" value="{{item.gasPrice}}"></paper-input>
+        <paper-input id="gasLimit" type="number" label="gasLimit" title="gasLimit" value="{{item.gasLimit}}"></paper-input>
+        <paper-input disabled="" id="address" label="fromAddress" title="fromAddress" value="{{item.fromAddress}}"></paper-input>
+    </template>
+
+    <script>
+        class ScheduledTransaction extends Polymer.Element {
+            static get is() {
+                return 'scheduled-transaction';
+            }
+
+            static get properties() {
+                return {
+                    item: {
+                        type: Object,
+                        notify: true
+                    },
+                    index: Number
+                };
+            }
+
+            constructor() {
+                super();
+            }
+
+            ready() {
+                super.ready();
+            }
+        }
+
+        window.customElements.define(ScheduledTransaction.is, ScheduledTransaction);
+    </script>
+</dom-module>

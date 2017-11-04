@@ -1,0 +1,583 @@
+<link rel="import" href="./../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="./../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="./../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="./../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="./../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="./../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="./../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="./../../bower_components/paper-toast/paper-toast.html">
+
+<link rel="import" href="./donation-dialog.html">
+<link rel="import" href="./timer-monitor.html">
+<link rel="import" href="./transaction-scheduler.html">
+<link rel="import" href="./coin-stack.html">
+<link rel="import" href="./keyfile-import.html">
+
+<dom-module id="bitcoinereum-mining-app">
+  <template>
+    <style>
+       :host {
+        display: block;
+      }
+
+      #startMine {
+        background: green;
+        color: white;
+        width: 200px;
+        height: 70px;
+      }
+
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        width: 100vw;
+        height: 64px;
+        color: #000;
+        font-size: 1.8em;
+        box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+        z-index: 10;
+        overflow: hidden;
+      }
+
+      #logo {
+        width: 33px;
+        height: auto;
+        margin: 4px 4px 4px 16px;
+        position: absolute;
+        left: 0px;
+        filter: invert(100%);
+      }
+
+      .onRails {
+        left: 99vw !important;
+      }
+
+      #title {
+        margin-left: 64px;
+      }
+
+      paper-item {
+        cursor: pointer;
+      }
+
+      paper-button[disabled] {
+        background: lightgray !important;
+      }
+
+      .content {
+        height: 100vh;
+        padding-top: 86px;
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: flex-start;
+      }
+
+      .left {
+        margin: 0 16px 0 64px;
+        width: 20vw;
+      }
+
+      .mid {
+        display: flex;
+        justify-content: flex-start;
+        width: 45vw;
+        margin: 0 auto;
+      }
+
+      .right {
+        width: 20vw;
+        display: flex;
+        justify-content: flex-end;
+        margin-right: 64px;
+      }
+
+      #provider {
+        margin-top: 26px;
+        width: 16vw;
+      }
+
+      #rails {
+        position: absolute;
+        height: 12px;
+        top: 52px;
+        width: 100vw;
+        border-top: 2px solid #fff;
+        display: flex;
+        transform: rotate(-1deg);
+        border-bottom: 2px solid white;
+      }
+
+      .rail {
+        margin-right: 0.9vw;
+        border-right: 1px solid white;
+        transform: rotate(26deg) translateY(-7px);
+        height: 27px;
+      }
+
+      #heart iron-icon {
+        --iron-icon-height: 58px;
+        --iron-icon-width: 58px;
+        cursor: pointer;
+      }
+
+      #donation:hover {
+        animation: drippin 0.8s infinite;
+        opacity: 1;
+      }
+
+      @keyframes drippin {
+        0%,
+        100% {
+          color: #7ccdea;
+        }
+        16% {
+          color: #0074D9;
+        }
+        32% {
+          color: #2ECC40;
+        }
+        48% {
+          color: #FFDC00;
+        }
+        64% {
+          color: #B10DC9;
+        }
+        80% {
+          color: #FF4136;
+        }
+      }
+
+      #expressionpoint,
+      #questionmark {
+        font-size: 3em;
+        cursor: pointer;
+      }
+
+      #bottomleft {
+        display: flex;
+        position: absolute;
+        bottom: 26px;
+        left: 64px;
+        align-items: center;
+      }
+
+      #bottomleft>div {
+        margin-right: 64px;
+      }
+
+      #bottomleft>div:hover {
+        opacity: 0.8;
+      }
+
+      paper-dialog {}
+
+      paper-dialog-scrollable {
+        font-size: 1.4em;
+        line-height: 1.5em;
+        margin: 16px 64px 16px 64px;
+      }
+
+      .bottonLeftDiv {
+        cursor: pointer;
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
+      }
+    </style>
+
+    <header>
+      <img id="logo" src="./../../resources/fun2.png">
+      <div id="title">MineBTCM</div>
+      <!--div id="rails"></div-->
+    </header>
+    <div class="content">
+      <div class="left">
+        <timer-monitor time-now="{{timeNow}}" reward-end="{{rewardEnd}}" time-difference="{{timeDifference}}"> </timer-monitor>
+        <paper-dropdown-menu id="provider" label="Web3 Provider" no-animations="" value="{{selectedProvider}}" disabled="">
+          <paper-listbox slot="dropdown-content" selected="0">
+            <paper-item>INFURA</paper-item>
+            <paper-item>localhost:8545</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <keyfile-import account-imported="{{accountImported}}" keyfile-address="{{keyfileAddress}}" private-key="{{privateKey}}"></keyfile-import>
+        <div id="bottomleft">
+          <div id="donation" class="bottonLeftDiv" on-tap="openDonation">
+            <div>Donate</div>
+            <div id="heart">
+              <iron-icon icon="icons:favorite"></iron-icon>
+            </div>
+          </div>
+          <div class="bottonLeftDiv" on-tap="openAbout">
+            <div>About</div>
+            <div id="expressionpoint">!</div>
+          </div>
+          <div class="bottonLeftDiv" on-tap="openHelp">
+            <div>Help</div>
+            <div id="questionmark">?</div>
+          </div>
+        </div>
+      </div>
+      <div class="mid">
+        <transaction-scheduler nothing-scheduled="{{nothingScheduled}}" scheduled-transactions="{{scheduledTransactions}}" keyfile-address="{{keyfileAddress}}">
+        </transaction-scheduler>
+      </div>
+      <div class="right">
+        <paper-button id="startMine" on-tap="toggleMining" disabled="{{notScheduledAndAccount}}">start mining</paper-button>
+        <coin-stack mined-amount="[[minedAmount]]" failed-amount="[[failedAmount]]"></coin-stack>
+      </div>
+    </div>
+
+    <paper-dialog id="donate" vertical-align="top" horizontal-align="left">
+      <paper-dialog-scrollable>
+        <donation-dialog private-key="{{privateKey}}" web3="{{web3}}" keyfile-address="{{keyfileAddress}}">
+        </donation-dialog>
+      </paper-dialog-scrollable>
+    </paper-dialog>
+
+    <paper-dialog id="help" vertical-align="top" horizontal-align="left">
+      <paper-dialog-scrollable>
+        <h1> Help </h1>
+        <p>
+          </p><h2>How to use minebtcm:</h2>
+          <p>
+            </p><h3> 1. Create a set of transactions (or choose a preset)</h3>
+            Transactions have the following parameters:<br><br>
+            <b>Offset</b>: specifies the time when the transaction should be executed in X SECONDS BEFORE the RewardEnd Time.
+            Executing the transaction after the RewardEnd Time is also possible by using a negative number but is not recommended.
+            <br><br>
+            <b>gasPrice</b>: the gas price in GWEI.
+            <br><br>
+            <b>gasLimit</b>
+            <h3>2. Import Account</h3>
+            An Account can either be imported by providing a pair of keyfile and passphrase or private key and public address.<br>            If you created an account with Ethereumwallet / Mist you have a keyfile and if you created an account e.g. in
+            MetaMask you can export the private key from there. The unlocking process can take some seconds.
+            <br>Don't worry, those information will stay locally in your browser for offline transaction signing and will
+            not leave there.
+            <h3>3. Start Mining</h3>
+            You can only start mining if at least one transaction is scheduled and a valid account is imported.
+            <br><br> Any questions? minebtcm@yandex.com
+            <h3>Happy mining!</h3>
+          <p></p>
+
+        <p></p>
+      </paper-dialog-scrollable>
+    </paper-dialog>
+
+    <paper-dialog id="about" vertical-align="top" horizontal-align="left">
+      <paper-dialog-scrollable>
+        <h1> About </h1>
+        <p>
+          About Bitcoinereum: <a href="http://bitcoinereum.com" target="_blank">Official Website</a>
+          <br><br> Bitcoinereum claims that everyone can mine it which is only partly true. Only programmers which could
+          write automated transaction execution bots were able to mine it successfully. Minebtcm provides an easy to use
+          interface to configure automated transaction execution within the browser, accessible and operable by everyone,
+          not only programmers. Minebtcm boosts the token's mining competition and may consequently lead to an increasing
+          price, adoption and public awareness.
+        </p>
+        <p>
+          If you found a bug or have any other questions: minebtcm@yandex.com
+        </p>
+        <p>
+          I'm open for hiring for Dapp related projects. Get in touch.
+        </p>
+
+        Mail: minebtcm@yandex.com
+        <br>Twitter: <a href="https://twitter.com/MineBTCM" target="_blank">MineBTCM Twitter Page </a>
+        <br>Discord: <a href="https://discordapp.com/channels/376223217624547338/376223217624547340" target="_blank">MineBTCM Channel</a>
+        <br><br> Note: This website is only tested in chrome.
+
+        <h2> Happy mining! </h2>
+        © 2017 minebtcm
+      </paper-dialog-scrollable>
+    </paper-dialog>
+
+
+  </template>
+
+  <script>
+    class BitcoinereumMiningApp extends Polymer.Element {
+      static get is() { return 'bitcoinereum-mining-app'; }
+      static get properties() {
+        return {
+          web3: Object,
+          keythereum: Object,
+          etx: {
+            type: Object
+          },
+          abi: Array,
+          contract: Object,
+          getData: String,
+          web3Provider: {
+            type: String,
+            value: "https://mainnet.infura.io/minebtcm.xyz"
+          },
+          selectedProvider: {
+            type: String,
+            notify: true,
+            observer: "web3ProviderChanged"
+          },
+          timeNow: {
+            type: Number,
+            notify: true,
+            observer: "_timeNowChanged"
+          },
+          rewardEnd: {
+            type: Number,
+            notify: true
+          },
+          timeDifference: {
+            type: Number,
+            notify: true
+          },
+          scheduledTransactions: {
+            type: Array,
+            notify: true
+          },
+          sentTransactions: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+          mining: {
+            type: Boolean,
+            notify: true,
+            value: false
+          },
+          nothingScheduled: {
+            type: Boolean,
+            notify: true,
+            observer: "_nothingScheduledChanged",
+            value: true
+          },
+          coinAudio: Object,
+          minedAmount: {
+            type: Number,
+            notify: true,
+            value: 0
+          },
+          failedAmount: {
+            type: Number,
+            notify: true,
+            value: 0
+          },
+          successTxs: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+          failTxs: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+          keyfileAddress: {
+            type: String,
+            notify: true,
+            observer: "_keyfileAddressChanged",
+            value: "fromAddress"
+          },
+          privateKey: {
+            type: Object,
+            notify: true
+          },
+          nextNonce: {
+            type: Number
+          },
+          accountImported: {
+            type: Boolean,
+            notify: true,
+            observer: "_accountImportedChanged",
+            value: false
+          },
+          notScheduledAndAccount: {
+            type: Boolean,
+            notify: true,
+            value: true
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+        ];
+      }
+
+      ready() {
+        super.ready();
+        this.web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/minebtcm.xyz"));
+        this.abi = [{ "constant": true, "inputs": [], "name": "name", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_spender", "type": "address" }, { "name": "_amount", "type": "uint256" }], "name": "approve", "outputs": [{ "name": "success", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "NextRewardHalving", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "totalSupply", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_from", "type": "address" }, { "name": "_to", "type": "address" }, { "name": "_amount", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "name": "success", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "decimals", "outputs": [{ "name": "", "type": "uint8" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [], "name": "Mine", "outputs": [{ "name": "success", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "MaxMiningReward", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "RewardStart", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "RewardHalvingTimePeriod", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [{ "name": "_owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "balance", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "RewardTimePeriod", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "MiningReward", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "symbol", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_to", "type": "address" }, { "name": "_amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "name": "success", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "RewardEnd", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "TimeNow", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "CurrentMined", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "MaxTotalSupply", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [{ "name": "_owner", "type": "address" }, { "name": "_spender", "type": "address" }], "name": "allowance", "outputs": [{ "name": "remaining", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "_from", "type": "address" }, { "indexed": true, "name": "_to", "type": "address" }, { "indexed": false, "name": "_value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "_owner", "type": "address" }, { "indexed": true, "name": "_spender", "type": "address" }, { "indexed": false, "name": "_value", "type": "uint256" }], "name": "Approval", "type": "event" }]
+        this.contract = this.web3.eth.contract(this.abi).at("0x03df4c372a29376d2c8df33a1b5f001cd8d68b0e");
+        this.getData = this.contract.Mine.getData();
+        this.getRewardEnd();
+        this.coinAudio = new Audio("./../../resources/smw_coin.wav");
+        this.etx = new ethereumjs.Tx();
+        this.keythereum = window.keythereum;
+        //this.drawRails();
+      }
+
+      _keyfileAddressChanged() {
+        if (this.web3) {
+          this.nextNonce = this.web3.eth.getTransactionCount(this.keyfileAddress);
+          console.log(this.keyfileAddress);
+        }
+      }
+
+      _nothingScheduledChanged() {
+        if (!this.nothingScheduled && this.accountImported) {
+          console.log("_nothingS");
+          this.notScheduledAndAccount = false;
+        } else {
+          this.notScheduledAndAccount = true;
+        }
+      }
+
+      _accountImportedChanged() {
+        if (!this.nothingScheduled && this.accountImported) {
+          console.log("_aIC");
+          this.notScheduledAndAccount = false;
+        } else {
+          this.notScheduledAndAccount = true;
+        }
+      }
+
+      _timeNowChanged() {
+        if (this.timeNow > this.rewardEnd) {
+          this.getRewardEnd();
+          if (this.timeNow < this.rewardEnd && this.mining) {
+            this.$.logo.style.transition = 0 + "s ease";
+            this.$.logo.classList.remove("onRails");
+            setTimeout(() => {
+              this.$.logo.style.transition = this.rewardEnd - this.timeNow + "s ease";
+              this.$.logo.classList.add("onRails");
+            }, 1000);
+          }
+        }
+        if (this.mining && !(this.timeNow > this.rewardEnd)) {
+          for (let i = 0; i < this.scheduledTransactions.length; i++) {
+            if (this.rewardEnd - this.scheduledTransactions[i].offset === this.timeNow) {
+              console.log("send transaction");
+              let trx = this.scheduledTransactions[i];
+              var txCount = this.web3.eth.getTransactionCount(this.keyfileAddress);
+              var rightnonce;
+              if (txCount < this.nextNonce) {
+                rightnonce = this.nextNonce;
+              } else {
+                rightnonce = txCount;
+              }
+              let rawTx = {
+                nonce: this.web3.toHex(rightnonce),
+                gasPrice: this.web3.toHex(this.web3.toWei(trx.gasPrice, 'gwei')),
+                gasLimit: this.web3.toHex(trx.gasLimit),
+                to: '0x03df4c372a29376d2c8df33a1b5f001cd8d68b0e',
+                value: '0x0',
+                data: this.getData,
+                chainId: "0x1"
+              };
+
+              const ejsTx = new ethereumjs.Tx(rawTx);
+              ejsTx.sign(this.privateKey);
+              const serializedTx = ejsTx.serialize();
+
+              this.web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
+                if (!err) {
+                  console.log(hash);
+                  this.push("sentTransactions", hash);
+                  this.checkTransactionStatus(hash);
+                } else
+                  console.log(err);
+              });
+              this.nextNonce++;
+              let toast = document.createElement('paper-toast');
+              toast.innerHTML = "Transaction(s) sent. Good luck!";
+              toast.open();
+            }
+          }
+        }
+      }
+
+      web3ProviderChanged() {
+        if (this.web3) {
+          if (this.selectedProvider == "INFURA") {
+            this.web3.setProvider(new Web3.providers.HttpProvider("https://mainnet.infura.io/minebtcm.xyz"));
+          } else if (this.selectedProvider == "localhost:8545") {
+            this.web3.setProvider(new Web3.providers.HttpProvider("http://localhost:8545"));
+          }
+        }
+      }
+
+      checkTransactionStatus(trxHash) {
+        setTimeout(() => {
+          this.web3.eth.getTransactionReceipt(trxHash, (error, result) => {
+            if (!error) {
+              console.log(result);
+              if (result != null) {
+                if (result.status === "0x1") {
+                  // TX succeeded
+                  console.log("succsess: " + trxHash);
+                  ++this.minedAmount;
+                  this.coinAudio.play();
+                } else if (result.status == "0x0") {
+                  console.log("fail: " + trxHash);
+                  ++this.failedAmount;
+                }
+              } else {
+                setTimeout(() => {
+                  this.checkTransactionStatus(trxHash);
+                }, 5000);
+              }
+            } else {
+              console.error(error);
+            }
+          });
+        }, 3000);
+      }
+
+      getRewardEnd() {
+        let end = this.contract.RewardEnd();
+        this.rewardEnd = end.c[0];
+      }
+
+      toggleMining() {
+        this.mining = !this.mining;
+        if (this.mining) {
+          this.$.startMine.style.background = "red"
+          this.$.startMine.innerHTML = "stop mining";
+          this.$.logo.style.transition = this.timeDifference + "s ease";
+          this.$.logo.classList.add("onRails");
+        } else {
+          this.$.startMine.style.background = "green";
+          this.$.startMine.innerHTML = "start mining";
+          this.$.logo.style.transition = 1.2 + "s ease";
+          this.$.logo.classList.remove("onRails");
+        }
+      }
+
+      drawRails() {
+        var rails = this.$.rails;
+        for (let i = 0; i < 112; i++) {
+          let rail = document.createElement('div');
+          rail.className = "rail";
+          rails.appendChild(rail);
+        }
+      }
+
+      openDonation() {
+        this.$.donate.open();
+      }
+
+      openHelp() {
+        this.$.help.open();
+      }
+
+      openAbout() {
+        this.$.about.open();
+      }
+
+    }
+    window.customElements.define(BitcoinereumMiningApp.is, BitcoinereumMiningApp);
+  </script>
+</dom-module>
